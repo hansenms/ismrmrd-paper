@@ -90,4 +90,17 @@ fig.text(dw/wt+0.7*w/wt,h/ht+g/ht,'Siemens',ha='center',va='bottom',size=12)
 fig.text(dw/wt+0.9*w/wt,h/ht+g/ht,'Synthetic',ha='center',va='bottom',size=12)
 
 fig.savefig('figure4_recon_demo.eps',format='eps',dpi=600)
+plt.close()
 
+
+fid = h5py.File('spiral.h5','r')
+spiral = np.squeeze(np.array(fid.get('/dataset/matlab')))
+spiral = np.reshape(spiral,[spiral.shape[0]*spiral.shape[1], spiral.shape[2]])
+fid.close()
+spiral = window_image(spiral,win_low=12,win_high=65)
+
+fig = plt.figure(1,(3.,1.),dpi=600,frameon=False)
+ax = fig.add_axes([0.,0.,1.,1.])
+ax.set_axis_off()
+ax.imshow(spiral.transpose(),cmap='gray',)
+fig.savefig('figure5_spiral_demo.eps',format='eps',dpi=600)
