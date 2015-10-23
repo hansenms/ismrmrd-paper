@@ -386,7 +386,6 @@ One of the key design features of the proposed format is the notion of an ``enco
 \end{center}
 \end{figure}
 
-
 \subsection*{ISMRMRD Library}
 The ISMRMRD library is a cross-platform implementation based on the \madded[R2.18]{domain-independent} Hierarchical Data Format (HDF) (\url{http://www.hdfgroup.org/HDF5}) for storage and provides C/C++, Python, and MATLAB (Mathworks) interfaces for reading and writing ISMRMRD files.  The project follows an open source development model with a website at (\url{http://ismrmrd.github.io}) and a discussion board and code repositories at \url{http://github.com/ismrmrd}.  The library and associated tools can be compiled in a straightforward way on Linux, Windows, and Apple computers.  This section provides a high-level description of the implementation and discuss some of the choices made during the development process.  The reader is encouraged to examine and experiment with the source code for more a detailed view.
 
@@ -419,6 +418,7 @@ It is worth emphasizing that creating the converters required significant work a
 In a typical MR image reconstruction research project, one often tests and validates an algorithm or a particular implementation of an algorithm. This validation can be done using simulated data and data acquired from phantom or in vivo experiments.  In the interest of reproducible research, a scientist could distribute the source code and the raw data sets that were used to generate the figures for the publication and perhaps additional code or data related to the testing or validation of the algorithm.
 This section demonstrates how one could use the ISMRMRD format and APIs for the development, implementation, and testing of an image reconstruction algorithm suitable for 2D experiments.
 
+\subsubsection*{Example 1: Cross-vendor and cross-language demonstration}
 In this example, the k-space data are acquired using a multi-channel receiver array and the data are fully sampled on a Cartesian grid.  The workflow for this demonstration project could form a subset of a full development cycle:
 \begin{enumerate}
 \item An initial implementation or proof of concept of the algorithm is implemented in a rapid prototyping language such as \mreplaced[R2.14]{MATLAB}{Matlab} or Python.
@@ -448,10 +448,20 @@ Data sets were collected from a phantom (kiwi fruit) using scanners from four di
 \end{itemize}
 Data were acquired using product 2D pulse sequences.  The FOV=10~cm, slice thickness=2~mm, and matrix size (Nx=Ny=512) were matched, although no attempt was made to match the pulse sequence type or timings.
 
+\subsubsection*{Example 2: Non-cartesian trajectories, nominal vs. corrected}
+\madded[R]{
+A spiral imaging data set is used to illustrate the optional k-space trajectory data included in the ISMRMRD format. Imaging data was acquired on a 1.5T Siemens system (32 spiral interleaves, FOV = 30 cm, slice thickness = 5cm, matrix size = 192). True k-space trajectories were predicted using the gradient impulse response function~\cite{Vannesjo2013, Campbell-Washburn2015} and stored with the k-space data in the ISMRMRD format.  A reconstruction program was written in MATLAB (\texttt{do\_spiral\_recon\_matlab.m}) to generate images using the ISMRMRD trajectory data and nominal variable density spiral trajectories.  
+}
+
+\subsubsection*{Example 3: Accelerated EPI with GRE coil sensitivity calibration and SENSE reconstruction}
+\madded[R2]{
+Multiple data sets.
+}
+
 \section*{Results}
 
 \subsection*{Experimental Demonstration}
-The raw data files were transferred off-line and converted into ISMRMRD using the vendor-specific converters described above. It was possible to convert the data from all four vendors. The resulting \madded[R2.25]{reconstructions} are shown in Fig.\ref{fig:demo}.
+The raw data files were transferred off-line and converted into ISMRMRD using the vendor-specific converters described above. It was possible to convert the data from all four vendors. The resulting \madded[R2.25]{reconstructions} are shown in Fig.~\ref{fig:demo}.
 
 % Figure 4
 \begin{figure}
@@ -460,6 +470,18 @@ The raw data files were transferred off-line and converted into ISMRMRD using th
 \end{center}
 \caption{An experimental demonstration where data sets were acquired on scanners from four vendors and converted from the vendor proprietary raw data file formats into ISMRMRD format.  A fifth data set was synthesized numerically and stored in ISMRMD format.  The five ISMRMRD raw data sets were reconstructed using three image reconstruction programs written in C++, MATLAB, and Python.  The resulting images are shown above, from left to right Bruker, General Electric, Philips, Siemens, and the synthetic data set,  and from top to bottom C++, MATLAB, and Python reconstruction programs. The differences in SNR and shading between the images are due to the coil geometries: small volume coil vs. knee coil vs. head array.}
 \label{fig:demo}
+\end{figure}
+
+\madded[R2]{
+Figure~\ref{fig:spiral} shows spiral images reconstructed using the ISMRMRD trajectories and nominal variable density spiral trajectories. The trajectory data stored in the ISMRMRD format incorporates contemporary system-specific calibration data to produce distortion corrected images during real-time or retrospective reconstruction.
+}
+% Figure 5
+\begin{figure}
+\begin{center}
+\includegraphics[width=6in]{figure5_spiral_demo.eps}
+\end{center}
+\caption{Images reconstructed with nominal variable density spiral trajectories compared to spiral trajectories stored in ISMRMRD format. ISMRMRD trajectories are predicted using contemporary gradient impulse response functions and therefore produce distortion-corrected reconstructed images. }
+\label{fig:spiral}
 \end{figure}
 
 \subsection*{Source Code and Raw Data Dissemination}
