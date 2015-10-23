@@ -1,0 +1,7 @@
+This folder contains external MATLAB code needed for the spiral example.
+
+- vdspiral from Brian Hargreaves:
+  http://www-mrsrl.stanford.edu/~brian/vdspiral/
+
+- irt (for nufft) from Jeff Fessler:
+  http://web.eecs.umich.edu/~fessler/irt/fessler.tgz
