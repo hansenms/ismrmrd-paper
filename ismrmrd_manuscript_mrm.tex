@@ -100,7 +100,7 @@ In this work, the authors propose a standardized, vendor-agnostic file format fo
 
 \question{R1.3} Many types of MRI reconstruction problems require multiple data sets of different types, such as parallel imaging as mentioned. It's discussed that the file format can incorporate both raw data and some image data, such as coil sensitivity profiles, but it was unclear to me whether several different raw data sets can be packaged into one file? For example, suppose I am doing a SENSE recon and have both k-space data for both my cal scan and accelerated acquisition. However, I am interested in experimenting with different coil profile estimation algorithms ? can I store both raw data sets in one file, since they go together?
 
-\response{Yes, multiple data sets can be stored in the same ISMRMRD file.  We have added text and a more complex example with a noise scan, a gradient echo sequence to measure coil sensitivity maps, and data from an accelerated EPI sequence to highlight this feature.  Please see the response to question R1.7 below.}
+\response{Yes, multiple data sets can be stored in the same ISMRMRD file.  We have added text and a more complex example with a noise scan, a gradient echo sequence to measure coil sensitivity maps, and data from an accelerated EPI sequence to highlight this feature.}
 
 \question{R1.4} Are there any limits on the dimensionality of the raw data?
 
@@ -116,7 +116,7 @@ In this work, the authors propose a standardized, vendor-agnostic file format fo
 
 \question{R1.7} This manuscript would greatly benefit from including more, and more complex, usage examples beyond the basic case in Fig. 3. Please add some additional examples demonstrating what the general file structure would be for some cases where different and multiple types of raw data are needed. Some examples that would be useful that come immediately to mind to me are: 1) a multi-channel spiral scan with a dual-echo cal (raw) data set for B0 map estimation; 2) a SENSE type parallel imaging scan with both a body and phased array cal scan; 3) a multi-shot, ramp-sampled EPI scan with zero and first order eddy current phase data; and 4) a randomly sampled acquisition like commonly used in compressed sensing applications.
 
-\response{Addressed below.}
+\response{We have added two more complex examples.  The first is a spiral sequence with a nominal k-space trajectory and a gradient impulse response function corrected trajectory stored for every acquisition.  The second is an accelerated EPI sequence with several calibration scans.  These two examples provide the reader with a sense of what is possible with the flexibility that is provided by the format.}
 
 \end{itemize}
 
@@ -130,19 +130,31 @@ This paper has high potential to be an important contribution to the MRI researc
 \begin{itemize}
 \question{R2.1} The most important addition to the paper, which I require in order to support acceptance for publication, is a table clearly showing the ISMRMRD encoding counters as rows (\texttt{kspace\_encoding\_step\_1}, \texttt{kspace\_encoding\_step\_2}, average, slice, contrast, phase, repetition, set, segment, user) and how the data dimensions of the considered vendors (Bruker, GE, Philips and Siemens) map into those encoding dimensions. For example it is not at all clear how commonly encountered data dimensions such as diffusion encoding direction, diffusion b-value, arterial spin labeling on/off, etc. map into the established ISMRMRD encoding counters. If a converter for a given vendor in its current form does not handle a certain common dimensionality, e.g. DWI/DTI, it should be noted. Nothing will turn off potential users faster than the disappointment of the converters not being able to handle very common scan types.
 
+\response{We have added a section describing the encoding counters and flags and have included a table showing the relationship between the ISMRMRD counters and the counters for the four vendors.  We now discuss more explicitly the current lack of a well articulated convention for many specific applications and use DWI and ASL as two examples of the lack of formal application specific guidelines.}
+
 \question{R2.2} Related to the above, the existence and intended use for the \texttt{user\_int} and \texttt{user\_float} arrays in the acquisition header and the user array in the encoding counters is not addressed anywhere in the text. Please add to the text a description of the envisioned purpose for these arrays. Their existence provides flexibility, but it also creates the potential for incompatibility if users and developers harness the user defined arrays differently.
+
+\response{As the reviewer correctly points out, these arrays are included to provide flexibility and unfortunately also create the potential for incompatibility.  We have added a paragraph to the ``Design'' section discussing the need for flexibility and highlighting the potential for incompatibility.}
 
 \question{R2.3} I am particularly concerned about the omission of a third \texttt{kspace\_encode\_step}, which leaves out easy support for 3D spectroscopic imaging. Please address this omission in the text and discuss how to support 3D spectroscopy with ISMRMRD.
 
+\response{Unfortunately \texttt{kspace\_encode\_step\_0} was omitted from the encoding counters in version 1 of the C-structs. (Although it is included in the encoding limits in the XML schema.)  We thank the reviewer for pointing out this oversight.  An issue (\#42) has been opened on GitHub and the oversight will be corrected in version 2 of the format.  We have added a sentence to the text in order to describe this issue.}
+
 \question{R2.4} Is spectroscopy otherwise fully compatible with ISMRMRD? In either case, please add statements about the compatibility with spectroscopy to the manuscript.
 
+\response{As far as we know the ISMRMRD format is fully compatible with spectroscopy (except for the caveat discussed in the previous question.)  Unfortunately none of the authors of the manuscript are particularly attuned to the needs of the spectroscopy community and there will certainly be experiments that are currently difficult to describe in the current format.  Of course we welcome any and all input from the members of the MR community who are interested in this application.  We have added a few sentences discussing spectroscopy support.}
+
 \question{R2.5} More needs to be said about how the community will work together in the future to make changes to the ISMRMRD format. For example, will everything be driven from the GitHub repositories? Will there be future ISMRM committees formed? What about a standing committee? Ultimately, who specifically has commit authority on the official GitHub repositories and how will that person or person(s) be selected in the future?
+
+\response{Michael, this one is yours.}
 
 \question{R2.6} Related to the above, there are already some choices in the fixed acquisition and encoding header that may not be adequate in the future. The use of uint16 (65,536 values) to represent \texttt{measurement\_uid} and kspace encoding steps may already be inadequate to handle sequences that exist today. Many fMRI and DTI scans existing today already produce nearly 20,000 images from single-shot EPI readouts, which would each require a unique \texttt{measurement\_uid}. What happens when uint16 is not enough?
 
 \response{An earlier version of the format used uint16 to store the measurement\_uid. The current version of the format uses uint32. The typographical error and has been corrected. Note that the measurement\_uid is meant to encode a unique ID for the measurement (series) and the scan\_counter is meant to store the acquisition number within a given measurement. The scan\_counter is also stored as a nint32 which should be sufficient for current scanner technology, although it could be increased in a future version to uint64 which is currently the limit in HDF5 for the number of elements in a dataset.   Note: latex the markup tool cannot be used in figures.}
 
 \question{R2.7} The role of the flags in the acquisition header is not mentioned anywhere, and there are many, many flags defined for ISMRMRD. Please add something about the flags if only to state the role, a few examples, and where to go to learn more.
+
+\response{A mention of the flags and a brief description of their use has been added in the section with responses for R2.1 and R2.2.}
 
 \question{R2.8} The manuscript states that the GE converter is private and only available within the GE MRI research converter. Does this mean that Bruker, Philips and Siemens granted permission to make their converters open source?
 
@@ -154,11 +166,19 @@ This paper has high potential to be an important contribution to the MRI researc
 
 \question{R2.10} Many potential users of the domain-specific ISMRMRD format may be skeptical of the underlying domain-independent HDF5 format. I strongly suggest spending more time discussing how HDF5 comes from the National Center for Supercomputing Applications (NCSA). Also, please give more citations/examples of how HDF5 is being use in biomedical science, e.g., the Biological Observation Matrix (BIOM) format described at http://www.biom-format.org. Other on-going and completed projects involving HDF5 are listed at http://www.hdfgroup.org/projects
 
+\response{We have added several sentences to the ``File container" section addressing this point.  We thank the reviewer for suggesting the references to BIOM and the list projects involving HDF5.}
+
 \question{R2.11} I strongly suggest adding a description of a known gotcha with the HDF5 format. HDF5 files include creation dates for the file and objects within a file. Actually multiple dates are supported (creation, last access, modification). This typically causes HDF5 files containing the exact same data to have different checksum values. To accurately compare two HDF5 files, a utility such as h5diff should be used. In fact, the paper should mention the existence (and download location) of hdf5 utilities and hdf5 viewers.
+
+\response{We have added a few sentences just after the additions for the previous question pointing the reader to the hdf5 utilities and viewers and mentioning the issue with needing hf5 specific tools for diff.}
 
 \question{R2.12} I confirmed that the image repository is downloadable, but I suggest posting the data using the EU-supported zenodo.org that will also create digital object identifiers (DOIs) for the data set that are easily citable. In fact, zenodo.org can also easily create DOIs for a specific release of the cited GitHub repositories.
 
+\response{We thank the reviewer for the excellent suggestion.  We have posted a copy of the data to zenodo and have hooked to the GitHub repositories to generate DOIs for each release.  The DOIs for the releases specific to this manuscript have been added to the text.  We have discontinued the use of XNAT as we have found it difficult to use for this type of data.}
+
 \question{R2.13} Not all dependencies for ISMRMRD and the converters are mentioned/cited such as FFTW, boost libraries, libXML, and libXSLT. Please add them to the text.
+
+\response{The currently implementation of the ISMRMRD C++ API for creating and reading from and writing to files only depends on HDF5 at runtime and CMake and HDF5 at build time.  The xmlheader handling depends on pugixml which is distributed with the source code.  The utilities for generated a test phantom and the simple reconstruct program depend on FFTW and boost.  The converters depend on ISMRMRD, Boost, libXML and libXST.  We have added some clarification in the text.}
 
 \question{R2.14} ``Matlab'' is used several places instead of ``MATLAB''. Please use ``MATLAB'' consistently.
 
@@ -223,7 +243,6 @@ This paper has high potential to be an important contribution to the MRI researc
 \question{R2.28} Figure 2: Can a 3D kspace trajectory with kx, ky, kz coordinates be stored as well?
 
 \response{Yes, storage of 3D space trajectories with kx, ky, kz coordinates is fully supported.  The phrase ``k-space sampling locations" in the caption refers to this capability.  It has been changed to ``k-spacing trajectory sampling locations".  Note: latex the markup tool cannot be used in figure captions.}
-
 
 \question{R2.29} Figure 4: The 32-ch GE and 32-ch Siemens results look shaded compared to the Bruker and Philips images. Bruker was a single-channel coil, but Philips was a 6-channel coil. Is the shading caused by the GE and Siemens being in a larger head coil while the Philips data was acquired in a smaller knee coil? The shading should be mentioned/addressed in the text or else some readers may incorrectly assume there is a problem with the conversion/reconstruction.
 
@@ -360,6 +379,14 @@ The proposed format also provides a simple image format for storing the product 
 \end{center}
 \end{figure}
 
+\subsubsection*{Encoding counters, flags}
+R2.1 table for counters comparison to vendors
+     diffusion encoding direction, diffusion b-value, arterial spin labeling on/off, etc. map into the established ISMRMRD encoding counters
+     \madded[]{Fig.~\ref{fig:cstruct}}
+
+R2.2 User int
+
+
 % Figure 2
 \begin{figure}
 \begin{center}
@@ -369,14 +396,15 @@ The proposed format also provides a simple image format for storing the product 
 \end{center}
 \end{figure}
 
+\subsubsection*{Encoding Space}
 One of the key design features of the proposed format is the notion of an ``encoding space", which is a description of the type and limits of the experiment and provides the reconstruction program with the physical size and resolution of the imaging volume and the ranges of the data header labels.  An ISMRMRD dataset may contain data from several encoding spaces.  Each encoding space is described in the XML header, and each acquisition (data chunk) is tagged with a label for the encoding space from which it was acquired. All encoding spaces have a trajectory type, an ``encodedSpace," a ``reconSpace", ``encodingLimits", and an optional trajectory description, that can contain an arbitrary set of named parameters such as the gradient ramp and flat top times for EPI, or the parameters controlling the shape of the spiral trajectory, etc.  An example of an encoding describing a simple 2D Cartesian acquisition is shown in Fig.~\ref{fig:encoding}.  In this particular case, the encoding has the following description:
 \begin{itemize}
 \item the ``encodedSpace" section gives the matrix size ($32\times16\times1$) and field of view in mm ($600\times300\times10$) of the imaging volume encoded by the excitation, i.e.,  a 10~mm thick slice, 600~mm in x and 300~mm in y, encoded with a nominal matrix size of 32 in x and 16 in y, i.e., at a nominal resolution of 18.75mm.
 \item The ``reconSpace" section indicates that the image should be reconstructed on a smaller field of view ($300\times300\times10$), but with half the number of pixels in x.
 \item The combination of the ``encodedSpace" and ``reconSpace" indicates that the \mreplaced[]{$k$}{k}-space data were acquired on a grid oversampled by a factor of 2 in the x direction.
 \item The ``encodingLimits" section indicates \mreplaced[R2.16]{the ky center (5) and the minimum and maximum ky values (0 and 11 respectively)}{the bounding box of the sampled region of $k$-space using arrays that are indexed from zero, therefore in this case the 12 points with indices from $0$ to $11$ with center at index $5$ indicate the 12 $ky$ points from $-5$ (index 0) to $+6$ (index 11) with center at $ky=0$ (index 5)}, i.e., this is a partial Fourier experiment, with a true pixel size that is somewhat larger than the nominal resolution\mdeleted[R2.16]{, $min(ky)=-5$, $max(ky)=+6$}.
-
 \end{itemize}
+
 % Figure 3
 \begin{figure}
 \begin{center}
@@ -385,6 +413,10 @@ One of the key design features of the proposed format is the notion of an ``enco
 \label{fig:encoding}
 \end{center}
 \end{figure}
+
+\subsubsection*{Application specificity}
+R2.2 User int, float
+R2.4 - Spectroscopy
 
 \subsection*{ISMRMRD Library}
 The ISMRMRD library is a cross-platform implementation based on the \madded[R2.18]{domain-independent} Hierarchical Data Format (HDF) (\url{http://www.hdfgroup.org/HDF5}) for storage and provides C/C++, Python, and MATLAB (Mathworks) interfaces for reading and writing ISMRMRD files.  The project follows an open source development model with a website at (\url{http://ismrmrd.github.io}) and a discussion board and code repositories at \url{http://github.com/ismrmrd}.  The library and associated tools can be compiled in a straightforward way on Linux, Windows, and Apple computers.  This section provides a high-level description of the implementation and discuss some of the choices made during the development process.  The reader is encouraged to examine and experiment with the source code for more a detailed view.
@@ -405,17 +437,18 @@ This work is implemented in three different programming environments or language
 \item{Python library.} This code consists of pure Python classes for the data structures, uses NumPy arrays for the data and the k-space trajectories (\url{http://www.numpy.org}), and an auto-generated XML header binding class.
 \end{itemize}
 
-The code repositories also contain the source code for the documentation (which use the Doxygen (\url{http://www.doxygen.org}) and Sphinx (\url{http://sphinx-doc.org}) projects) as well as examples of how to use the APIs to read and write ISMRMRD files.
+The code repositories also contain the source code for the documentation (which use the Doxygen (\url{http://www.doxygen.org}) and Sphinx (\url{http://sphinx-doc.org}) projects) as well as \mreplaced[R2.13]{example utility programs demonstrating}{examples of} how to use the APIs to read and write ISMRMRD files.  \madded[R2.13]{The utility programs depend on the Boost library (\url{http://boost.org}) for command-line user interaction.}
 
 \subsection*{Data Conversion Tools}
-Converters have been developed for several proprietary file formats: Bruker, General Electric, Philips, and Siemens.  The Bruker, Philips and Siemens converters are open source with repositories that can also be found at \url{http://github.com/ismrmrd}.  The GE converter relies on proprietary vendor code and is being distributed via the vendor's research network.  Given the variety in vendor raw data file formats, the architecture of these programs is described in general terms with the aim of giving some guidance or aid to others who are implementing their own conversion tools.  The reader is referred to the source code for  details, but to give a few examples: the Bruker raw data are stored in a simple directory structure with the acquisition parameters stored in several text files and k-space data stored in a simple binary file as equal length frames of k-space data; there are no data labels associated with each data frame. Siemens raw data are stored in a single integrated file that can contain raw data from multiple scans.  For each scan, acquisition parameters are stored in a structured text header, followed by k-space data frames stored in acquisition order, where each frame of k-space data is tagged with data labels containing the frame's line number, slice number, location, etc. The complexity of the GE and Philips formats fall somewhere between the simple file structure of the Bruker format and the more integrated file format used on the Siemens systems. The GE data does not contain explicit labels for each data frame and more sequence knowledge is needed to convert the data. The Philips raw data format has data labels associated with each data frame and it was possible to design a more generic automated converter.   
+Converters have been developed for several proprietary file formats: Bruker, General Electric, Philips, and Siemens.  The Bruker, Philips and Siemens converters are open source with repositories that can also be found at \url{http://github.com/ismrmrd}.  The GE converter relies on proprietary vendor code and is being distributed via the vendor's research network.  Given the variety in vendor raw data file formats, the architecture of these programs is described in general terms with the aim of giving some guidance or aid to others who are implementing their own conversion tools.  The reader is referred to the source code for  details, but to give a few examples: the Bruker raw data are stored in a simple directory structure with the acquisition parameters stored in several text files and k-space data stored in a simple binary file as equal length frames of k-space data; there are no data labels associated with each data frame. Siemens raw data are stored in a single integrated file that can contain raw data from multiple scans.  For each scan, acquisition parameters are stored in a structured text header, followed by k-space data frames stored in acquisition order, where each frame of k-space data is tagged with data labels containing the frame's line number, slice number, location, etc. The complexity of the GE and Philips formats fall somewhere between the simple file structure of the Bruker format and the more integrated file format used on the Siemens systems. The GE data does not contain explicit labels for each data frame and more sequence knowledge is needed to convert the data. The Philips raw data format has data labels associated with each data frame and it was possible to design a more generic automated converter. 
 
-The converters for the aforementioned vendor formats were written in C++. Acquisition parameters from the vendor-specific data were converted to an intermediate XML file (containing vendor-specific parameter names and values). This  XML file was then translated into the vendor-independent ISMRMRD XML header file using a sequence-specific Extensible Stylesheet Language (XSL) style sheet. The frames of k-space data were processed in the order in which they appeared on disk.  For formats with tagged data frames (Philips and Siemens), the proprietary binary header tags were parsed and used to populate the fixed-size ISMRMRD data header structures.  For formats with untagged data frames (Bruker and GE), sequence and vendor-specific knowledge was used.  
+The converters for the aforementioned vendor formats were written in C++. \madded[R2.13]{All four converters use the CMake build system and depend on the ISMRMRD C/C++ library described above as well as Boost for user interaction.  For XML file handling, the converters also depend on  either 1) libXML2 and libXSLT (\url{http://www.xmlsoft.org}) on Linux and Apple, or 2) the Xerces-C XML parser library (\url{http://xerces.apache.org/xerces-c/}) on Windows.}  Acquisition parameters from the vendor-specific data were converted to an intermediate XML file (containing vendor-specific parameter names and values). This  XML file was then translated into the vendor-independent ISMRMRD XML header file using a sequence-specific Extensible Stylesheet Language (XSL) style sheet. The frames of k-space data were processed in the order in which they appeared on disk.  For formats with tagged data frames (Philips and Siemens), the proprietary binary header tags were parsed and used to populate the fixed-size ISMRMRD data header structures.  For formats with untagged data frames (Bruker and GE), sequence and vendor-specific knowledge was used.  
 
 It is worth emphasizing that creating the converters required significant work and special knowledge of the vendor formats. However, once code was developed for converting raw data from one pulse sequence on a particular platform, it was straightforward to modify this code to handle other sequences. It is expected that other developers can modify these converters to handle currently unsupported product sequences or their own research sequences. It is also important to note that while some users may work on the implementation of these vendor-specific converters, many users will simply use the converted ISMRMRD files as input for the algorithms and thus be exposed less to these vendor-specific details as a consequence of using the proposed format. 
 
-\subsection*{Experimental Demonstration}
+\subsection*{Experimental Demonstrations}
 In a typical MR image reconstruction research project, one often tests and validates an algorithm or a particular implementation of an algorithm. This validation can be done using simulated data and data acquired from phantom or in vivo experiments.  In the interest of reproducible research, a scientist could distribute the source code and the raw data sets that were used to generate the figures for the publication and perhaps additional code or data related to the testing or validation of the algorithm.
+
 This section demonstrates how one could use the ISMRMRD format and APIs for the development, implementation, and testing of an image reconstruction algorithm suitable for 2D experiments.
 
 \subsubsection*{Example 1: Cross-vendor and cross-language demonstration}
