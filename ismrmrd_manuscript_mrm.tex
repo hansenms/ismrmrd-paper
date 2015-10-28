@@ -96,7 +96,7 @@ In this work, the authors propose a standardized, vendor-agnostic file format fo
 \begin{itemize}
 \question{R1.1} One significantly absent part of this paper is a definition of what is ``raw'' data. To different people even within the MRI community, this can mean very different things. To me, raw data is MRI data that has been completely untouched by any processing whatsoever. This means no gridding/ramp sampling correction, coil compression/combination, zero padding, parallel imaging reconstruction, partial Fourier, etc..... To others, something like post-GRAPPA, post-Homodyne k-space data that hasn't yet been zero-padded and DICOM-encoded might be ``raw''. Back when the ISMRM Fat+Water toolbox came out, this issue came up because some of the ``raw'' complex image data had actually been coil combined ? some people thought this was a non-issue while others were unhappy about the pre-processing. Given the tag ``raw data format'', I think there needs to be a very clear specification of what is and isn't raw data, and a more clear discussion about how these distinctions will be made.
 
-\response{We agree with the reviewer completely with the reviewer as to the definition of ``raw data".  We have added some text in various parts of the text and we have hopefully clarify and reinforced the point that raw data means completely untouched by any processing - as close as possible to the output of the analog to digital converters.}
+\response{We agree completely with the reviewer as to the definition of ``raw data".  We have added some text in various parts of the text and have hopefully clarified and reinforced the point that raw data means completely untouched by any processing - as close as possible to the output of the analog to digital converters.}
 
 \question{R1.2} In effort to promote the flexibility of the ISMRM XML+HDF5 file format structure, the authors have painted a picture of almost too much flexibility ? which raises the question of how is any type of real ``standardization'' going to be maintained? Are there any elements in the header that must always be present and defined in an ISMRMRD file, e.g., data dimensions? In other words, what exactly is guaranteed to be common amongst every single ISMRMRD file? This should be presented very explicitly.
 
@@ -453,7 +453,7 @@ It is worth emphasizing that creating the converters required significant work a
 \subsection*{Experimental Demonstrations}
 In a typical MR image reconstruction research project, one often tests and validates an algorithm or a particular implementation of an algorithm. This validation can be done using simulated data and data acquired from phantom or in vivo experiments.  In the interest of reproducible research, a scientist could distribute the source code and the raw data sets that were used to generate the figures for the publication and perhaps additional code or data related to the testing or validation of the algorithm.
 
-This section demonstrates how one could use the ISMRMRD format and APIs for the development, implementation, and testing of an image reconstruction algorithm suitable for 2D experiments.
+This section demonstrates how one could use the ISMRMRD format and APIs for the development, implementation, and testing of \deleted{an} image reconstruction \replaced{algorithms}{algorithm} suitable for 2D experiments.
 
 \subsubsection*{Example 1: Cross-vendor and cross-language demonstration}
 In this example, the k-space data are acquired using a multi-channel receiver array and the data are fully sampled on a Cartesian grid.  The workflow for this demonstration project could form a subset of a full development cycle:
@@ -486,14 +486,32 @@ Data sets were collected from a phantom (kiwi fruit) using scanners from four di
 Data were acquired using product 2D pulse sequences.  The FOV=10~cm, slice thickness=2~mm, and matrix size (Nx=Ny=512) were matched, although no attempt was made to match the pulse sequence type or timings.
 
 \subsubsection*{Example 2: Non-cartesian trajectories, nominal vs. corrected}
-\madded[R]{
-A spiral imaging data set is used to illustrate the optional k-space trajectory data included in the ISMRMRD format. Imaging data was acquired on a 1.5T Siemens system (32 spiral interleaves, FOV = 30 cm, slice thickness = 5cm, matrix size = 192). True k-space trajectories were predicted using the gradient impulse response function~\cite{Vannesjo2013, Campbell-Washburn2015} and stored with the k-space data in the ISMRMRD format.  A reconstruction program was written in MATLAB (\texttt{do\_spiral\_recon\_matlab.m}) to generate images using the ISMRMRD trajectory data and nominal variable density spiral trajectories.  
+\madded[R1.7]{
+A spiral imaging experiment set was used to illustrate the use of the optional $k$-space trajectory data included in the ISMRMRD format. Data were acquired on a 1.5T Siemens system using an interleaved variable density spiral trajectory (32 spiral interleaves, FOV = 30 cm, slice thickness = 5cm, matrix size = 192). The parameters describing the nominal trajectory were stored in the encoding section of the ISMRMD XML header. Gradient impulse response function corrected $k$-space trajectories were predicted using the system-specific gradient impulse response function~\cite{Vannesjo2013, Campbell-Washburn2015} and stored along with the $k$-space data in the ISMRMRD data file.  A reconstruction program written in MATLAB (\texttt{do\_spiral\_recon\_matlab.m}) was used to generate images using both the nominal and and corrected spiral trajectories.  
 }
 
 \subsubsection*{Example 3: Accelerated EPI with GRE coil sensitivity calibration and SENSE reconstruction}
-\madded[R2]{
-Multiple data sets.
+\madded[R1.7]{
+An echo planar imaging (EPI) experiment was used to illustrate how data from multiple scans can be stored in a single ISMRMRD file. Three data sets were acquired on a 3T Siemens system using two pulse sequences:
 }
+\begin{enumerate}
+\item a conventional fully-encoded gradient echo sequence
+\item an accelerated (R=2) single-shot EPI sequence with 3 navigators per shot
+\item a noise scan (collected by the EPI sequence)
+\end{enumerate}
+\madded[R1.7]{
+The three data sets were stored in the same ISMRMRD file.  A reconstruction program written in Python (\texttt{do\_epi\_recon\_python.py}) was used to reconstruct images from the EPI time series as follows:
+}
+\begin{enumerate}
+\item The noise data were used for pre-whitening.
+\item The fully encoded GRE data were reconstructed (2D FFT).
+\item The GRE images were used to estimate SENSE unmixing weights.
+\item Each acquisition (one line in $ky$) of the data from the EPI sequence was reconstructed in the x-direction using gridding.
+\item For each shot of EPI data, the three navigators were used to estimate EPI phase correction.
+\item After phase correction, the EPI data (R=2) where reconstructed by FFT in the y-direction followed producing aliased images.
+\item The SENSE unmixing coefficients were applied to the aliased images to produce a single un-aliased image.
+\end{enumerate}
+
 
 \section*{Results}
 
@@ -509,9 +527,9 @@ The raw data files were transferred off-line and converted into ISMRMRD using th
 \label{fig:demo}
 \end{figure}
 
-\madded[R2]{
-Figure~\ref{fig:spiral} shows spiral images reconstructed using the ISMRMRD trajectories and nominal variable density spiral trajectories. The trajectory data stored in the ISMRMRD format incorporates contemporary system-specific calibration data to produce distortion corrected images during real-time or retrospective reconstruction.
-}
+\madded[R1.7]{
+Figure~\ref{fig:spiral} shows spiral images reconstructed using nominal and corrected variable density spiral trajectories. The corrected trajectories are predicted by the sequence ``on the fly" using system-specific calibration data and are stored in the ISMRMRD file along with the raw $k$-space data.  Images reconstructed with knowledge of the corrected trajectories are significantly less distorted and can be produced both in real-time or retrospectively.}
+
 % Figure 5
 \begin{figure}
 \begin{center}

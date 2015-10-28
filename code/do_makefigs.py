@@ -11,7 +11,6 @@ def window_image(im,win_low=1,win_high=95):
     im2 = 255.0*(im2 - bins[win_low])/bins[win_high]
     return im2
 
-
 fid = h5py.File('bruker.h5','r')
 bruk_cpp = np.squeeze(np.array(fid.get('/dataset/cpp/data')))
 bruk_mat = np.squeeze(np.array(fid.get('/dataset/matlab')))
@@ -97,10 +96,19 @@ fid = h5py.File('spiral.h5','r')
 spiral = np.squeeze(np.array(fid.get('/dataset/matlab')))
 spiral = np.reshape(spiral,[spiral.shape[0]*spiral.shape[1], spiral.shape[2]])
 fid.close()
-spiral = window_image(spiral,win_low=12,win_high=65)
+spiral = window_image(spiral,win_low=30,win_high=100)
 
-fig = plt.figure(1,(3.,1.),dpi=600,frameon=False)
-ax = fig.add_axes([0.,0.,1.,1.])
+w, h = 3.6,1.0
+dw, dh = 0.0, 0.3
+g = 0.03
+wt = w+dw
+ht = h+dh
+
+fig = plt.figure(1,(wt,ht),dpi=600,frameon=False)
+ax = fig.add_axes([dw/wt,0,1.-dw/wt,h/ht])
 ax.set_axis_off()
 ax.imshow(spiral.transpose(),cmap='gray',)
+fig.text(dw/wt+0.15*w/wt,h/ht+g/ht,'Nominal',ha='center',va='bottom',size=12)
+fig.text(dw/wt+0.50*w/wt,h/ht+g/ht,'Corrected',ha='center',va='bottom',size=12)
+fig.text(dw/wt+0.83*w/wt,h/ht+g/ht,'Difference',ha='center',va='bottom',size=12)
 fig.savefig('figure5_spiral_demo.eps',format='eps',dpi=600)
