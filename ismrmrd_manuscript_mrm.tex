@@ -15,12 +15,13 @@
 % For selectively turning things on and off in the draft
 \usepackage{ifdraft}
 
-% Spacing, math, code listing, color, crossrefs in pdf
+% Spacing, math, color, crossrefs in pdf
 \usepackage[margin=1in]{geometry} % 1in margin all around
-\usepackage{setspace, amsmath, listings, xcolor}
+\usepackage{setspace, amsmath, xcolor, float, tabularx}
 \usepackage[hyphens]{url}
 % Graphics. Always show the figures but float to the end
-\usepackage[final]{graphicx, subfig}
+% code listing
+\usepackage[final]{graphicx, subfig, listings}
 \usepackage{endfloat}
 % Improve the line breaking to reduce the number of overfull boxes
 \usepackage[final]{microtype}
@@ -96,7 +97,7 @@ In this work, the authors propose a standardized, vendor-agnostic file format fo
 \begin{itemize}
 \question{R1.1} One significantly absent part of this paper is a definition of what is ``raw'' data. To different people even within the MRI community, this can mean very different things. To me, raw data is MRI data that has been completely untouched by any processing whatsoever. This means no gridding/ramp sampling correction, coil compression/combination, zero padding, parallel imaging reconstruction, partial Fourier, etc..... To others, something like post-GRAPPA, post-Homodyne k-space data that hasn't yet been zero-padded and DICOM-encoded might be ``raw''. Back when the ISMRM Fat+Water toolbox came out, this issue came up because some of the ``raw'' complex image data had actually been coil combined ? some people thought this was a non-issue while others were unhappy about the pre-processing. Given the tag ``raw data format'', I think there needs to be a very clear specification of what is and isn't raw data, and a more clear discussion about how these distinctions will be made.
 
-\response{We agree completely with the reviewer as to the definition of ``raw data".  We have added some text in various parts of the text and have hopefully clarified and reinforced the point that raw data means completely untouched by any processing - as close as possible to the output of the analog to digital converters.}
+\response{We agree completely with the reviewer as to the definition of ``raw data".  We have added a paragraph in the introduction and have hopefully clarified and reinforced the point that raw data means completely untouched by any processing - as close as possible to the output of the analog to digital converters.}
 
 \question{R1.2} In effort to promote the flexibility of the ISMRM XML+HDF5 file format structure, the authors have painted a picture of almost too much flexibility ? which raises the question of how is any type of real ``standardization'' going to be maintained? Are there any elements in the header that must always be present and defined in an ISMRMRD file, e.g., data dimensions? In other words, what exactly is guaranteed to be common amongst every single ISMRMRD file? This should be presented very explicitly.
 
@@ -104,7 +105,7 @@ In this work, the authors propose a standardized, vendor-agnostic file format fo
 
 \question{R1.3} Many types of MRI reconstruction problems require multiple data sets of different types, such as parallel imaging as mentioned. It's discussed that the file format can incorporate both raw data and some image data, such as coil sensitivity profiles, but it was unclear to me whether several different raw data sets can be packaged into one file? For example, suppose I am doing a SENSE recon and have both k-space data for both my cal scan and accelerated acquisition. However, I am interested in experimenting with different coil profile estimation algorithms ? can I store both raw data sets in one file, since they go together?
 
-\response{Yes, multiple data sets can be stored in the same ISMRMRD file.  We have added text and a more complex example with a noise scan, a gradient echo sequence to measure coil sensitivity maps, and data from an accelerated EPI sequence to highlight this feature.}
+\response{Yes, multiple data sets can be stored in the same ISMRMRD file.  We have added text and a more complex example with a noise scan, a gradient echo sequence to measure coil sensitivity maps, and data from an accelerated EPI sequence to highlight this feature.  See also the response to question R1.7 below.}
 
 \question{R1.4} Are there any limits on the dimensionality of the raw data?
 
@@ -116,7 +117,7 @@ In this work, the authors propose a standardized, vendor-agnostic file format fo
 
 \question{R1.6} As vendors release new system software versions, etc..., who will be maintaining and updating the conversion tools and ensuring their correctness?
 
-\response{As vendors release new software versions, the members of the research community who are users of that platform will need to contribute their expertise to update the conversion tools and to ensure their correctness. The process under which this necessary work will be carried out is as yet undetermined, and one can imagine various ways in which it could be accomplished. Presumably, there would be some sort of board or governing committee drawn from the members of the ISMRM.  No matter which structure is decided upon, it is our belief that this work is best done by those that have a vested interest in it, and that in general, it is usually preferable to keep formalized processes and rules to a minimum. We have added some text to the discussion regarding this point.}
+\response{As vendors release new software versions, the members of the research community who are users of that platform will need to contribute their expertise to update the conversion tools and to ensure their correctness. The process under which this necessary work will be carried out is as yet undetermined, and one can imagine various ways in which it could be accomplished.  No matter which structure is decided upon, it is our belief that this work is best done by those that have a vested interest in it, and that in general, it is usually preferable to keep formalized processes and rules to a minimum. We have added some text to the discussion regarding this point.  See also the response to question R2.5 below.}
 
 \question{R1.7} This manuscript would greatly benefit from including more, and more complex, usage examples beyond the basic case in Fig. 3. Please add some additional examples demonstrating what the general file structure would be for some cases where different and multiple types of raw data are needed. Some examples that would be useful that come immediately to mind to me are: 1) a multi-channel spiral scan with a dual-echo cal (raw) data set for B0 map estimation; 2) a SENSE type parallel imaging scan with both a body and phased array cal scan; 3) a multi-shot, ramp-sampled EPI scan with zero and first order eddy current phase data; and 4) a randomly sampled acquisition like commonly used in compressed sensing applications.
 
@@ -354,9 +355,11 @@ Bethesda, MD 20892 \\
 \section*{Introduction}
 Image reconstruction research has played a pivotal role in driving many advances in magnetic resonance imaging. Examples of paradigm shifting techniques include parallel imaging~\cite{Pruessmann:1999uq, Sodickson:1997fk, Griswold:2002kx}  and, more recently, the introduction of nonlinear reconstruction and compressed sensing~\cite{Donoho:2006compressed, Lustig:2007vn}. Novel reconstruction algorithms build on and improve existing methodology, and most reconstruction articles compare new methods to existing methods in terms of image quality and reconstruction speed.
 
-Reproducible research has drawn a great deal of attention recently, as highlighted for example in a recent special issue of Science~\cite{Jasny:2011again, Peng:2011reproducible}. The field of computational science in particular has produced several excellent examples of how such research can be carried out, e.g., the wavelab toolbox~\cite{wavelab}.  The ISMRM has begun to take steps to help facilitate reproducible research, e.g., with the MRI unbound website~\cite{mri_unbound}. Underlying many of these efforts is a discipline-specific file format specification that allows scientists to exchange data easily.  Much of modern astronomy research, for example, relies on telescope data in the FITS standard~\cite{fits}.  Other discipline-specific data formats have enabled scientists to escape from the limitations imposed by vendor-specific, proprietary technology, leading to the development of a wide range of post-acquisition data analysis tools, and enabling large-scale collaborations.  Medical imaging has the DICOM standard~\cite{dicom}, which allows radiology departments to store data from different vendors on a centralized PACS, and computer scientists to implement novel image processing methods in a vendor neutral manner. The subfield of neuroimaging has NIfTI~\cite{nifti}, which underlies large-scale projects like the human connectome project~\cite{connectome}. The image file formats are useful for disciplines that operate on the reconstructed images, but they do not address the needs of scientists involved in the development of image reconstruction algorithms. This paper proposes an MR-specific raw data format. 
+Reproducible research has drawn a great deal of attention recently, as highlighted for example in a recent special issue of Science~\cite{Jasny:2011again, Peng:2011reproducible}. The field of computational science in particular has produced several excellent examples of how such research can be carried out, e.g., the wavelab toolbox~\cite{wavelab}.  The ISMRM has begun to take steps to help facilitate reproducible research, e.g., with the MRI unbound website~\cite{mri_unbound}. Underlying many of these efforts is a discipline-specific file format specification that allows scientists to exchange data easily.  Much of modern astronomy research, for example, relies on telescope data in the FITS standard~\cite{fits}.  Other discipline-specific data formats have enabled scientists to escape from the limitations imposed by vendor-specific, proprietary technology, leading to the development of a wide range of post-acquisition data analysis tools, and enabling large-scale collaborations.  Medical imaging has the DICOM standard~\cite{dicom}, which allows radiology departments to store data from different vendors on a centralized PACS, and computer scientists to implement novel image processing methods in a vendor neutral manner. The subfield of neuroimaging has NIfTI~\cite{nifti}, which underlies large-scale projects like the human connectome project~\cite{connectome}. The image file formats are useful for disciplines that operate on the reconstructed images, but they do not address the needs of scientists involved in the development of image reconstruction algorithms. This paper proposes an MR-specific raw data format.
 
-This ISMRMRD standard was developed by a subcommittee of the ISMRM Sedona 2013 workshop.  It is designed to capture the details of the MRI experiment in a way that permits image reconstruction.  It is important to note that this goal is fundamentally different from that of proprietary vendor raw data file formats.  Generally, proprietary vendor raw file formats are intended to capture protocol parameters for a particular pulse sequence at the time of the scan.  The proprietary raw data file formats are intended to store the information needed to reproduce a particular experiment on a specific version of the scanner software and reconstruction framework.  The tight coupling between 1) the scanner console user interface, 2) the pulse sequence control parameters, and 3) the image reconstruction control parameters, make the vendor formats depend on a great deal of proprietary, vendor-specific knowledge. The quantity of hidden information makes these formats inconvenient for data sharing.  More importantly, the specific implementation details of a particular vendor's scanner software architecture greatly influences the design of these file formats and the type of information that they contain.  In contrast, the proposed standard is designed to facilitate the exchange of the raw k-space data along with the physics parameters of the data acquisition process to provide the information necessary for image reconstruction.
+\madded[R1.1]{A consistent definition of the term ``raw data" is needed from the outset.  The variations in the definitions of this term within the MRI community are surprising, as evidenced for example by the reactions of various parties during the ISMRM Fat/Water challenge, when ``raw data" was taken to mean complex image data had been coil combined.  Some members of the community held the view this form of pre-processing (coil-combination) was a non-issue, while others held the opposite view and were unhappy that the data had been pre-processed at all.  In the context of this endeavor, the term ``raw data" is defined as MR data that has been completely untouched by any processing whatsoever, i.e. no gridding or ramp sampling correction, coil compression or combination, Fourier transformation, zero padding, etc.  In practical terms, ``raw data" means as close as possible to the output of the instrument's analog to digital converters}
+
+This ISMRMRD standard was developed by a subcommittee of the ISMRM Sedona 2013 workshop.  It is designed to capture the details of the MRI experiment in a way that permits image reconstruction.  It is important to note that this goal is fundamentally different from that of proprietary vendor raw data file formats.  Generally, proprietary vendor raw file formats are intended to capture protocol parameters for a particular pulse sequence at the time of the scan.  The proprietary raw data file formats are intended to store the information needed to reproduce a particular experiment on a specific version of the scanner software and reconstruction framework.  The tight coupling between 1) the scanner console user interface, 2) the pulse sequence control parameters, and 3) the image reconstruction control parameters, make the vendor formats depend on a great deal of proprietary, vendor-specific knowledge. The quantity of hidden information makes these formats inconvenient for data sharing.  More importantly, the specific implementation details of a particular vendor's scanner software architecture greatly influences the design of these file formats and the type of information that they contain.  In contrast, the proposed standard is designed to facilitate the exchange of the raw k-space data along with the physics parameters of the data acquisition process to provide the information necessary for image reconstruction.   
 
 While the ISMRMRD format will continue to evolve as it attracts more users with a more diverse set of applications and needs, the basic format has remained stable for more than two years, and it makes sense to present it to the MRI community. This paper lays out the design and structure of the format and describes several software tools that have been developed to interact with data in the proposed format. A number of vendor-specific tools have been created for converting proprietary data formats to the proposed format. An overview of the current status of these data converters and information needed to locate them is also provided. As a demonstration of how the data format can be used, a phantom has been scanned on four different scanners, the data converted to ISMRMRD and reconstructed with several different open source reconstruction programs written in  \mreplaced[R2.14]{MATLAB}{Matlab} (The MathWorks), Python, and C++ programming languages. 
 
@@ -383,14 +386,6 @@ The proposed format also provides a simple image format for storing the product 
 \end{center}
 \end{figure}
 
-\subsubsection*{Encoding counters, flags}
-R2.1 table for counters comparison to vendors
-     diffusion encoding direction, diffusion b-value, arterial spin labeling on/off, etc. map into the established ISMRMRD encoding counters
-     \madded[]{Fig.~\ref{fig:cstruct}}
-
-R2.2 User int
-
-
 % Figure 2
 \begin{figure}
 \begin{center}
@@ -401,7 +396,7 @@ R2.2 User int
 \end{figure}
 
 \subsubsection*{Encoding Space}
-One of the key design features of the proposed format is the notion of an ``encoding space", which is a description of the type and limits of the experiment and provides the reconstruction program with the physical size and resolution of the imaging volume and the ranges of the data header labels.  An ISMRMRD dataset may contain data from several encoding spaces.  Each encoding space is described in the XML header, and each acquisition (data chunk) is tagged with a label for the encoding space from which it was acquired. All encoding spaces have a trajectory type, an ``encodedSpace," a ``reconSpace", ``encodingLimits", and an optional trajectory description, that can contain an arbitrary set of named parameters such as the gradient ramp and flat top times for EPI, or the parameters controlling the shape of the spiral trajectory, etc.  An example of an encoding describing a simple 2D Cartesian acquisition is shown in Fig.~\ref{fig:encoding}.  In this particular case, the encoding has the following description:
+One of the key design features of the proposed format is the notion of an ``encoding space", which is a description of the type and limits of the experiment and provides the reconstruction program with the physical size and resolution of the imaging volume and the ranges of the data header labels.  An ISMRMRD dataset may contain data from several encoding spaces.  Each encoding space is described in the XML header, and each acquisition (data chunk) is tagged with a label for the encoding space from which it was acquired. All encoding spaces have a trajectory type, an ``encodedSpace," a ``reconSpace", ``encodingLimits", and an optional trajectory description, that can contain an arbitrary set of named parameters such as the gradient ramp and flat top times for EPI, or the parameters controlling the shape of the spiral trajectory, etc.   A somewhat more complex example of an encoding describing a simple 2D Cartesian acquisition is shown in Fig.~\ref{fig:encoding}.  In this particular case, the encoding has the following description:
 \begin{itemize}
 \item the ``encodedSpace" section gives the matrix size ($32\times16\times1$) and field of view in mm ($600\times300\times10$) of the imaging volume encoded by the excitation, i.e.,  a 10~mm thick slice, 600~mm in x and 300~mm in y, encoded with a nominal matrix size of 32 in x and 16 in y, i.e., at a nominal resolution of 18.75mm.
 \item The ``reconSpace" section indicates that the image should be reconstructed on a smaller field of view ($300\times300\times10$), but with half the number of pixels in x.
@@ -418,15 +413,84 @@ One of the key design features of the proposed format is the notion of an ``enco
 \end{center}
 \end{figure}
 
-\subsubsection*{Application specificity}
-R2.2 User int, float
-R2.4 - Spectroscopy
+\subsubsection*{Encoding counters and flags}
+\madded[R2.1]{Each acquisition data header depicted in Fig.~\ref{fig:cstruct}, contains a set of encoding counters: \texttt{kspace\_encoding\_step\_1}, \texttt{slice}, etc. For a particular data set, the meaning of the encoding counters depends on the encoding space defined in the data set's XML header.  For the case of cartesian imaging, the mapping between ISMRMRD encoding counters and vendor specific dimensions is shown in Table~\ref{tab:counters}.}  \madded[R2.2]{The encoding counters also include a set of 8 integers and 8 floating point numbers that can be used an application specific way, for example they could refer to b-value and gradient direction in a diffusion weighted imaging sequence (see below).}
+
+\begin{table}[htb]
+\begin{center}
+\begin{tabularx}{0.9\textwidth}{c | c | c | c | c}
+ISMRMRD & Bruker & GE & Philips & Siemens \\
+\hline \rule{0pt}{2.6ex}
+kspace\_encode\_step\_1 & encode step 1 & frame & e1 & line \\
+kspace\_encode\_step\_2 & encode step 2 & - & e2 & partition \\
+average & - & - & measurement & acquisition \\
+slice & slice & slice & location & slice \\
+contrast & echo & echo & echo & echo \\
+phase & - & - & cardiac phase & phase \\
+repetition & repetition & repetition & dynamic scan & repetition \\
+set & - & - & row & set \\
+segment & - & - & - & segment \\
+\end{tabularx}
+\end{center}
+\caption{The relationship between ISMRMRD encoding counters for conventional cartesian imaging and vendor dimension labels.}
+\label{tab:counters}
+\end{table}
+
+\madded[R2.7]{In addition to the encoding counters, each acquisition data header also contains a field for a set of flags (encoded as a 64-bit unsigned integer).  These flags can be used to provide hints to the image reconstruction program, for example, an acquisition may be tagged with the flag \texttt{ISMRMRD\_ACQ\_FIRST\_IN\_SLICE}. The reader is referred to the header file (\texttt{ismrmrd.h}) for a list of available flags.}
+
+\subsubsection*{Flexibility vs. structure}
+\madded[R1.2]{One of the main design goals of the format is to strike a balance between flexibility and structure, providing sufficient flexibility to enable the development of novel data acquisition and image reconstruction methods, within a sufficiently well-specified structure that allows for the standardization of accepted methods.  It is necessary for the file format to specify a clear set of rules for data organization; this is achieved by the schema for the XML header and the definition of the data structures.  For example, for a data set to be valid, it must consist of a minimal ISMRMRD XML header, i.e. one instance of the experimentalConditions, and one encoding space, as well as some number of acquisitions.  More complexity is required to describe a spectroscopic imaging experiment, or a diffusion weighted imaging experiment, or an areterial spin labeling experiment, etc., and one would need to combine more information in the XML header and the encoding counters. For example, a data set acquired using a variable density spiral sequence would need to use the trajectory description portion of the encoding space.  The XML header for such an experiment is shown in Fig.~\ref{fig:spiralxml}.  The trajectory description provides an identifier and the set of parameters used in the trajectory design, and for this particular case, the encoding counter \texttt{kspace\_encoding\_step\_1} is used to indicate the interleaf number.  At this early stage, it is difficult to foresee the ways in which different practitioners will chose to use the format for their specific applications, and more importantly, the challenge is not technical, but rather sociological.  A consensus would need to emerge around the description of a particular type of experiment, and the community would need to agree on the meaning of the various parameters stored in the XML header and in the individual acquisition headers.  The file format itself is designed to provide a framework within which these discussions can take place.}
+
+% Figure 4 Spiral XML Header
+\begin{figure}
+\begin{center}
+\begin{lstlisting}[language=XML, frame=BT, framesep=10pt, basicstyle=\small]
+<trajectory>spiral</trajectory>
+<trajectoryDescription>
+    <identifier>HargreavesVDS2000</identifier>
+    <userParameterLong>
+        <name>interleaves</name>
+        <value>32</value>
+    </userParameterLong>
+    <userParameterLong>
+        <name>fov_coefficients</name>
+        <value>1</value>
+    </userParameterLong>
+    <userParameterLong>
+        <name>SamplingTime_ns</name>
+        <value>2600</value>
+    </userParameterLong>
+    <userParameterDouble>
+        <name>MaxGradient_G_per_cm</name>
+        <value>2.400000</value>
+    </userParameterDouble>
+    <userParameterDouble>
+        <name>MaxSlewRate_G_per_cm_per_s</name>
+        <value>14414.413920</value>
+    </userParameterDouble>
+    <userParameterDouble>
+        <name>FOVCoeff_1_cm</name>
+        <value>30.000000</value>
+    </userParameterDouble>
+    <userParameterDouble>
+        <name>krmax_per_cm</name>
+        <value>3.200000</value>
+    </userParameterDouble>
+    <comment>Using spiral design by Brian Hargreaves 
+    (http://mrsrl.stanford.edu/~brian/vdspiral/)
+    </comment>
+</trajectoryDescription>
+\end{lstlisting}
+\caption{XML header encoding space for a variable density spiral sequence, providing an identifier and the set of parameters used to generate the trajectory.  The reconstruction program would need to be programmed to use this information.}
+\label{fig:spiralxml}
+\end{center}
+\end{figure}
 
 \subsection*{ISMRMRD Library}
 The ISMRMRD library is a cross-platform implementation based on the \madded[R2.18]{domain-independent} Hierarchical Data Format (HDF) (\url{http://www.hdfgroup.org/HDF5}) for storage and provides C/C++, Python, and MATLAB (Mathworks) interfaces for reading and writing ISMRMRD files.  The project follows an open source development model with a website at (\url{http://ismrmrd.github.io}) and a discussion board and code repositories at \url{http://github.com/ismrmrd}.  The library and associated tools can be compiled in a straightforward way on Linux, Windows, and Apple computers.  This section provides a high-level description of the implementation and discuss some of the choices made during the development process.  The reader is encouraged to examine and experiment with the source code for more a detailed view.
 
 \subsubsection*{File container}
-The HDF format was chosen as the binary file container.  The HDF format is very flexible and has been adopted broadly in the scientific community.  Reading and writing from the HDF format are supported by most programming languages and computational environments.  The HDF library has a core C and C++ API, is supported natively in MATLAB (it forms the basis for MATLAB's own ``.mat" file format \madded[R2.17]{starting with mat-file version 7.3 (MATLAB R2006b) or later}), and is supported in Python via the H5Py package (\url{http://www.h5py.org}).
+The HDF format was chosen as the binary file container.  The HDF format is very flexible and has been adopted broadly in the scientific community.  \madded[R2.10]{HDF5 originated with National Center for Supercomputing Applications (NCSA) in the late 1980s and has grown to become the file format used by a wide range of large scale projects in government, private sector, and academic communities, in earth-science, astronomy, nuclear physics, etc.  HDF5 has also been adopted by projects in biomedical science, e.g. the Biological Observation Matrix (BIOM) format for ``-omics" described at (\url{http://www.biom-format.org}). The HDF Group was spun-off from NCSA as a non-profit organization to support the format.  The reader is reffered to the HDF Group's website for more information regarding projects using HDF5 (\url{http://www.hdfgroup.org/HDF5/users5.html}, and on-going and completed projects involving the HDF Group (\url{http://www.hdfgroup.org/projects}).} Reading and writing from the HDF format are supported by most programming languages and computational environments.  The HDF library has a core C and C++ API, is supported natively in MATLAB (it forms the basis for MATLAB's own ``.mat" file format \madded[R2.17]{starting with mat-file version 7.3 (MATLAB R2006b) or later}), and is supported in Python via the H5Py package (\url{http://www.h5py.org}).  \madded[R2.11]{The HDF Group distributes a viewer (hdfview) and a set of command line utility tools for manipulating and interactive with HDF5 files (\url{https://www.hdfgroup.org/products/hdf5_tools/}). The flexibility of the HDF5 format can make its use somewhat complex, for example the format supports multiple creation dates for the file and objects within a file (creation, last access, modification), sometimes causing HDF5 files containing the exact same data to have different checksum values, and making the use of a tool such as the h5diff utility necessary for the accurate comparison of two HDF5 files.  Therefore, one of the goals of the implementation of the ISMRMD library is to provide a domain specific layer that hide the details of the HDF5 file format.} 
 
 \subsubsection*{XML header data binding}
 The XML header can be thought of as a text representation of relevant experimental parameters that are needed for meaningful image reconstruction. When writing image reconstruction software, the software developer usually interacts with a binary representation of the XML document (XML Data Binding) to avoid direct, error prone, and tedious interaction with the XML text. The process of generating the binary representation of the XML document (deserialization) and the generation of the XML document from the binary representation (serialization) is handled by dedicated functions. Both the binary representation and the functions for serialization and deserialization can be auto-generated by XML data binding tools, e.g., CodeSynthesis XSD (\url{http://www.codesynthesis.com/products/xsd/}) for C++, JAXB for Java (\url{https://jaxb.java.net/}), or PyXB (\url{http://pyxb.sourceforge.net/}) for Python. The auto-generated data structures and functions are easier to maintain since they can be regenerated when the XML schema (\texttt{ismrmrd.xsd}) changes, but the syntax they provide can be less convenient. Alternatively, data structures and serialization and deserialization code can be "handcrafted". This may provide a more convenient interface, but the software maintenance overhead is greater. The proposed data format does not dictate which approach to use when interacting with the XML header, but the provided libraries include data structures and associated functions. Depending on the convenience of available tools these software components have either been "handcrafted" or auto-generated as described below.  
@@ -518,7 +582,7 @@ The three data sets were stored in the same ISMRMRD file.  A reconstruction prog
 \subsection*{Experimental Demonstration}
 The raw data files were transferred off-line and converted into ISMRMRD using the vendor-specific converters described above. It was possible to convert the data from all four vendors. The resulting \madded[R2.25]{reconstructions} are shown in Fig.~\ref{fig:demo}.
 
-% Figure 4
+% Figure 5
 \begin{figure}
 \begin{center}
 \includegraphics[width=6in]{figure4_recon_demo.eps}
@@ -527,10 +591,9 @@ The raw data files were transferred off-line and converted into ISMRMRD using th
 \label{fig:demo}
 \end{figure}
 
-\madded[R1.7]{
-Figure~\ref{fig:spiral} shows spiral images reconstructed using nominal and corrected variable density spiral trajectories. The corrected trajectories are predicted by the sequence ``on the fly" using system-specific calibration data and are stored in the ISMRMRD file along with the raw $k$-space data.  Images reconstructed with knowledge of the corrected trajectories are significantly less distorted and can be produced both in real-time or retrospectively.}
+\madded[R1.7]{Figure~\ref{fig:spiral} shows spiral images reconstructed using nominal and corrected variable density spiral trajectories. The corrected trajectories are predicted by the sequence ``on the fly" using system-specific calibration data and are stored in the ISMRMRD file along with the raw $k$-space data.  Images reconstructed with knowledge of the corrected trajectories are significantly less distorted and can be produced both in real-time or retrospectively.}
 
-% Figure 5
+% Figure 6
 \begin{figure}
 \begin{center}
 \includegraphics[width=6in]{figure5_spiral_demo.eps}
@@ -539,32 +602,48 @@ Figure~\ref{fig:spiral} shows spiral images reconstructed using nominal and corr
 \label{fig:spiral}
 \end{figure}
 
+\madded[R1.7]{Figure~\ref{fig:epi} shows images reconstructed from an accelerated EPI sequence.  Data from a fully encoded GRE sequence (not shown) were used to estimate the coil sensitivities.  Both data sets were stored in a single ISMRMRD file.}
+
+% Figure 7
+\begin{figure}
+\begin{center}
+Coming soon
+\end{center}
+\caption{Images reconstructed from an accelerated EPI sequence using SENSE.  Coil sensitivities were estimated from a GRE sequence (not shown).}
+\label{fig:epi}
+\end{figure}
+
 \subsection*{Source Code and Raw Data Dissemination}
-The source code for this project is being distributed in several git repositories hosted on GitHub at the URLs listed bellow.  The SHA-1 hashes uniquely identify the particular revision of each of the repositories used for the production of this manuscript:
+The source code for this project is being distributed in several git repositories hosted on GitHub at the URLs listed bellow.  The SHA-1 hashes uniquely identify the particular revision of each of the repositories used for the production of this manuscript.  \madded[R2.12]{Snapshots of the code repositories can also be found on the E.U funded Zenodo project website hosted at CERN, which provides a digital object identifier (DOI) for each release of each repository}:
 \begin{itemize}
 \item Manuscript LaTeX, figures and \mreplaced[R2.14]{MATLAB}{Matlab} and Python reconstruction: \\
 	\url{https://github.com/ismrmrd/ismrmrd-paper} \\
 	hash=\githash
 \item C++ API and C++ synthetic data generation and C++ reconstruction: \\
 	\url{https://github.com/ismrmrd/ismrmrd} \\
-    	hash=e7ecb1bbc93c62aceaeb8d197016d67b44e07fee
+    	hash=c485787c98f4c2ad7ad6a2f9f5a0f4dc3927ea94 \\
+	\url{http://dx.doi.org/10.5281/zenodo.32618}
 \item Python API: \\
 	\url{https://github.com/ismrmrd/ismrmrd-python} \\
-	hash=4e2d8be17ad14fc9ff8d5801751a4511ce435b39
+	hash=c38cd60c3a69416374c276b7820b0ffd70a6c4e0
 \item Bruker converter: \\
 	\url{https://github.com/ismrmrd/bruker_to_ismrmrd}\\
-	hash=46dbb5720e9f4304af0920cd6dfa5f7370c75d89
+	hash=28db2bcf9eae799f6ec64e556b80c40d34ce319c\\
+	\url{http://dx.doi.org/10.5281/zenodo.32597}
 \item GE converter (currently private):\\
 	 \url{https://github.com/nih-fmrif/ge-tools} \\
 	 hash=f63f74e61e2f8bc920164aa5c8e6ef4dd22705b0
 \item Siemens converter:\\
 	 \url{http://github.com/ismrmrd/siemens_to_ismrmrd}\\
-	 hash=a740086b831c5b259aca36a41a3654b04c672b03
+	 hash=9d464513f9224cba33c6b674e12443ee3954c172\\
+	 \url{http://dx.doi.org/10.5281/zenodo.32596}
 \item Philips converter: \\
 	\url{https://github.com/ismrmrd/philips_to_ismrmrd}\\
-	hash=b5256ed8267446e70059a5eea88ae6de59c12fe7
+	hash=581601fad04dee333ae6ff021d9ad1b39b3044b0\\
+	\url{http://dx.doi.org/10.5281/zenodo.32595}
 \end{itemize}
-The raw data in vendor proprietary formats and in ISMRMRD format are being distributed via GitHub (\url{https://github.com/ismrmrd/ismrmrd/releases/download/v1.2.3-data/ismrmrd_data.zip})\mdeleted[R2.26]{XNAT (http://central.xnat.org) under the project ``ISMRMRD Paper" with ID ``ISMRMRD"}.  Alternatively the raw data can be downloaded using the \texttt{code/do\_get\_data.sh} script \madded[R2.26]{which is intended for Linux/Apple}. Readers are encouraged to download the data and source code.
+
+The raw data in vendor proprietary formats and in ISMRMRD format are being distributed via \madded[R2.12]{Zenodo} (\url{http://dx.doi.org/10.5281/zenodo.32809}). \mdeleted[R2.12]{GitHub ...XNAT}.  Alternatively the raw data can be downloaded using the \texttt{code/do\_get\_data.sh} script \madded[R2.26]{which is intended for Linux/Apple}. Readers are encouraged to download the data and source code.
 
 % ------------------------------------------------------------------------
 %	Discussion
