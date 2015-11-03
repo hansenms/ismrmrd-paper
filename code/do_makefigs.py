@@ -112,3 +112,24 @@ fig.text(dw/wt+0.15*w/wt,h/ht+g/ht,'Nominal',ha='center',va='bottom',size=12)
 fig.text(dw/wt+0.50*w/wt,h/ht+g/ht,'Corrected',ha='center',va='bottom',size=12)
 fig.text(dw/wt+0.83*w/wt,h/ht+g/ht,'Difference',ha='center',va='bottom',size=12)
 fig.savefig('figure5_spiral_demo.eps',format='eps',dpi=600)
+
+
+fid = h5py.File('epi.h5','r')
+epi = np.squeeze(np.array(fid.get('/dataset/python')))
+epi = np.reshape(epi,[epi.shape[0]*epi.shape[1], epi.shape[2]])
+fid.close()
+epi = window_image(epi,win_low=12,win_high=75)
+
+w, h = 3.6,1.0
+dw, dh = 0.0, 0.3
+g = 0.03
+wt = w+dw
+ht = h+dh
+
+fig = plt.figure(1,(wt,ht),dpi=600,frameon=False)
+ax = fig.add_axes([dw/wt,0,1.-dw/wt,h/ht])
+ax.set_axis_off()
+ax.imshow(epi.transpose(),cmap='gray',)
+fig.text(dw/wt+0.50*w/wt,h/ht+g/ht,'Accelerated EPI with GRE Reference Scan',ha='center',va='bottom',size=12)
+fig.savefig('figure6_epi_demo.eps',format='eps',dpi=600)
+
