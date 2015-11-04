@@ -295,13 +295,13 @@ def reconstruct_epi(filename, datasetname, noise, gre):
     Rpos = Rpos.transpose()
     Rneg = Rneg.transpose()
 
-    ###############################
-    # Calculate the kspace filter #
-    # Tukey filter after gridding #
-    ###############################
+    #################################
+    # Calculate the kspace filter   #
+    # Hanning filter after gridding #
+    #################################
     import scipy.signal
-    kfiltx = scipy.signal.tukey(nkx)
-    kfilty = scipy.signal.tukey(nky)
+    kfiltx = scipy.signal.hann(nkx)
+    kfilty = scipy.signal.hann(nky)
     Rpos = np.dot(Rpos, np.diag(kfiltx))
     Rneg = np.dot(Rneg, np.diag(kfiltx))
 
