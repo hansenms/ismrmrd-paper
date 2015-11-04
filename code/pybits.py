@@ -1,3 +1,5 @@
+from __future__ import division
+
 import ismrmrd
 import ismrmrd.xsd
 import math
@@ -293,6 +295,16 @@ def reconstruct_epi(filename, datasetname, noise, gre):
     Rpos = Rpos.transpose()
     Rneg = Rneg.transpose()
 
+    ###############################
+    # Calculate the kspace filter #
+    # Tukey filter after gridding #
+    ###############################
+    import scipy.signal
+    kfiltx = scipy.signal.tukey(nkx)
+    kfilty = scipy.signal.tukey(nky)
+    Rpos = np.dot(Rpos, np.diag(kfiltx))
+    Rneg = np.dot(Rneg, np.diag(kfiltx))
+
     ####################################
     # Calculate SENSE unmixing weights #
     ####################################
@@ -305,9 +317,10 @@ def reconstruct_epi(filename, datasetname, noise, gre):
     # Estimate coil sensitivites from the GRE data
     csm_orig = np.zeros(gre.shape,dtype=np.complex)
     for z in range(nslices):
-        res = coils.calculate_csm_inati_iter(gre[z,:,:,:],smoothing=15)
-        csm_orig[z,:,:,:] = res[0]*res[2] # weight the coil sensitivities by the local power
-    
+        (csmtmp, actmp, rhotmp) = coils.calculate_csm_inati_iter(gre[z,:,:,:])
+        weight = rhotmp**2 / (rhotmp**2 + .01*np.median(rhotmp.ravel())**2)
+        csm_orig[z,:,:,:] = csmtmp*weight
+ 
     # Deal with difference in resolution
     # Up/down sample the coil sensitivities to the resolution of the EPI
     xcsm = np.arange(gre.shape[3])/gre.shape[3]
@@ -385,10 +398,10 @@ def reconstruct_epi(filename, datasetname, noise, gre):
             data = coils.apply_prewhitening(acq.data,noise.preWMtx)
             if acq.isFlagSet(ismrmrd.ACQ_IS_REVERSE):
                 rho = transform.transform_kspace_to_image(np.dot(data, Rneg),dim=[1])
-                H[slice,:,ky,:] = np.conj(corr)*rho
+                H[slice,:,ky,:] = kfilty[ky]*np.conj(corr)*rho
             else:
                 rho = transform.transform_kspace_to_image(np.dot(data, Rpos),dim=[1])
-                H[slice,:,ky,:] = corr*rho        
+                H[slice,:,ky,:] = kfilty[ky]*corr*rho        
             scan += 1
 
     # Close the data set
